@@ -12,6 +12,10 @@
 %->> Identification
 %---------------------------------------------------------------------------%
 \NeedsTeXFormat{LaTeX2e}%
+\newcommand*\@iflatexlater{\@ifl@t@r\fmtversion}%
+\@iflatexlater{2017/01/01}{}{%
+    \ClassError{ucasthesis}{TeXLive/MikTex >= 2017 is required ...}{}%
+}
 \ProvidesClass{ucasthesis}[2014/10/01 v1.0 LaTeX document class]%
 %---------------------------------------------------------------------------%
 %->> Declare options
@@ -34,7 +38,7 @@
 %-> Language
 %-
 \newif\ifucas@plain \ucas@plainfalse
-\DeclareOption{plain}{% enable plain writing style
+\DeclareOption{scheme=plain}{% enable plain writing style
     \PassOptionsToClass{scheme=plain}{ctexbook}%
     \ucas@plaintrue%
 }
@@ -58,7 +62,10 @@
 %---------------------------------------------------------------------------%
 %->> Load class information
 %---------------------------------------------------------------------------%
-\LoadClass[UTF8,a4paper,zihao=-4]{ctexbook}
+\LoadClass[UTF8,a4paper,zihao=-4]{ctexbook}%
+\@ifclasslater{ctexbook}{2017/01/01}{}{%
+    \ClassError{ucasthesis}{ctex >= 2017/01/01 is required ...}{}%
+}
 %---------------------------------------------------------------------------%
 %->> Required packages
 %---------------------------------------------------------------------------%
@@ -66,6 +73,21 @@
 \RequirePackage{etoolbox}% a toolbox of programming facilities
 \newcommand{\ucasifstreq}{\expandafter\ifstrequal\expandafter}% expansion control
 \newcommand{\ucasifstrbk}{\expandafter\ifblank\expandafter}% expansion control
+\RequirePackage{expl3}% LaTeX3 programming environment
+\ExplSyntaxOn
+\newcommand{\ucaslntotab}[2][1pt]{% convert lines into table lines
+    \seq_set_split:NnV \l_tmpa_seq {\\} {#2}
+    \clist_set_from_seq:NN \l_tmpa_clist \l_tmpa_seq
+    \clist_clear:N \l_tmpb_clist
+    \clist_map_inline:Nn \l_tmpa_clist
+      {%
+        \clist_put_right:Nn \l_tmpb_clist 
+          { \ulenhance[#1]{\ulextend{##1}} }
+      }
+    %\clist_show:N\l_tmpb_clist% show the content of comma list
+    \clist_use:Nn \l_tmpb_clist { \\ & }
+}
+\ExplSyntaxOff
 %---------------------------------------------------------------------------%
 %->> Load class configuration
 %---------------------------------------------------------------------------%
@@ -123,14 +145,14 @@
 }
 %- underline
 \ifxetex%
-    %\RequirePackage{ulem}% loaded by xeCJKfntef
+    \RequirePackage{ulem}%
 \else%
     \RequirePackage{ulem}%
 \fi
 \newcommand{\ulunify}[1]{\uline{#1}}% unified name
 \newcommand{\ulenhance}[2][1pt]{% enhanced underline
     \def\ULthickness{#1}% set thickness
-    \setlength{\ULdepth}{0.3em}% set depth
+    \setlength{\ULdepth}{0.5em}% set depth
     \expandafter\ulunify\expandafter{#2}% linebreak fix
 }
 \newcommand{\ulhshift}{-4em}% horizontal shift on underline
@@ -161,9 +183,9 @@
 \def\ucas@value@ch@author{}
 \renewcommand{\author}[1]{\def\ucas@value@ch@author{#1}}
 \def\ucas@value@ch@advisor{}
-\newcommand{\advisor}[1]{\def\ucas@value@ch@advisor{#1}}
+\newcommand{\advisor}[1]{\long\def\ucas@value@ch@advisor{#1}}
 \def\ucas@value@ch@advisors{}
-\newcommand{\advisors}[1]{\def\ucas@value@ch@advisors{#1}}
+\newcommand{\advisors}[1]{\long\def\ucas@value@ch@advisors{#1}}
 \def\ucas@value@ch@degree{}
 \newcommand{\degree}[1]{\def\ucas@value@ch@degree{#1}}
 \def\ucas@value@ch@degreetype{}
@@ -173,7 +195,7 @@
 \def\ucas@value@ch@major{}
 \newcommand{\major}[1]{\def\ucas@value@ch@major{#1}}
 \def\ucas@value@ch@institute{}
-\newcommand{\institute}[1]{\def\ucas@value@ch@institute{#1}}
+\newcommand{\institute}[1]{\long\def\ucas@value@ch@institute{#1}}
 \def\ucas@value@ch@school{}
 \newcommand{\school}[1]{\def\ucas@value@ch@school{#1}}
 \def\ucas@value@ch@orginization{}
@@ -255,7 +277,7 @@
         \def\maketitle{\maketitle@pdc}
         \def\MAKETITLE{\MAKETITLE@pdc}
     }{%
-        \ClassError{ucasthesis}{Invalid value of '\string\DEGREE'}{Please check the spelling}%
+        \ClassWarning{ucasthesis}{Invalid value of '\string\DEGREE', please check the spelling}%
     }}}}%
 }
 %-
@@ -288,11 +310,10 @@
         \def\arraystretch{1.3}
         \begin{tabular}{lc}
             \ucas@label@ch@author & \ulenhance[1.2pt]{\ulextend{\ucas@value@ch@author}}\\
-            \ucas@label@ch@advisor & \ulenhance[1.2pt]{\ulextend{\ucas@value@ch@advisor}}\\
-            & \ulenhance[1.2pt]{\ulextend{\ucas@value@ch@advisors}}\\
+            \ucas@label@ch@advisor & \ucaslntotab[1.2pt]{\ucas@value@ch@advisor}\\
             \ucas@label@ch@degree & \ulenhance[1.2pt]{\ulextend{\ucas@value@ch@degreetype\ucas@value@ch@degree}}\\
             \ucas@label@ch@major & \ulenhance[1.2pt]{\ulextend{\ucas@value@ch@major}}\\
-            \ucas@label@ch@institute & \ulenhance[1.2pt]{\ulextend{\ucas@value@ch@institute}}\\
+            \ucas@label@ch@institute & \ucaslntotab[1.2pt]{\ucas@value@ch@institute}\\
         \end{tabular}
 
         \vspace*{\stretch{4}}
@@ -337,7 +358,7 @@
         \vspace*{30pt}
 
         \linespread{2.0}
-        \zihao{4}\bfseries
+        \zihao{4}
 
         \makebox[3.0em][s]{\ucas@label@ch@classid} \ulenhance{\ulextend[6em]{\zihao{5}\ucas@value@ch@classid}} \hfill{} \ucas@label@ch@confidential \ulenhance{\ulextend[6em]{\zihao{5}\ucas@value@ch@confidential}}
 
@@ -349,11 +370,11 @@
 
         \vspace*{\stretch{1}}
 
-        {\zihao{-2}\bfseries\sffamily{\ziju{0.5} \ucas@label@ch@thesis}}
+        {\zihao{-2}\bfseries\sffamily{\ziju{0.5}\ucas@label@ch@thesis}}
 
         \vspace*{\stretch{3}}
 
-        {\zihao{-3}\bfseries\sffamily \ulenhance[1.5pt]{\ucas@value@ch@title}}
+        {\zihao{-3} \ulenhance[1.5pt]{\ucas@value@ch@title}}
 
         \vspace*{\stretch{2.5}}
 
@@ -432,15 +453,15 @@
     \thispagestyle{empty}
     \begin{center}
         \linespread{2.0}
-        \zihao{4}\bfseries
+        \zihao{4}
 
         \vspace*{50pt}
 
-        {\zihao{3}\bfseries \ucas@value@ch@title}
+        {\zihao{3} \ucas@value@ch@title}
 
         \vspace*{\stretch{3}}
 
-        {\zihao{-3}\bfseries \ucas@value@en@title}
+        {\zihao{-3} \ucas@value@en@title}
 
         \vspace*{\stretch{3}}
 
@@ -537,7 +558,9 @@
 \ifucas@plain%
     \def\contentsname{\ucas@label@en@tocname}
     \def\listfigurename{\ucas@label@en@lsfigname}
+    \def\listappfigname{}
     \def\listtablename{\ucas@label@en@lstabname}
+    \def\listapptabname{}
     \def\bibname{\ucas@label@en@bibname}
     \def\refname{\ucas@label@en@bibname}
     \def\algname{\ucas@label@en@algname}
@@ -559,7 +582,9 @@
 \else
     \def\contentsname{\ucas@label@ch@tocname}
     \def\listfigurename{\ucas@label@ch@lsfigname}
+    \def\listappfigname{}
     \def\listtablename{\ucas@label@ch@lstabname}
+    \def\listapptabname{}
     \def\algname{\ucas@label@ch@algname}
     \def\bibname{\ucas@label@ch@bibname}
     \def\refname{\ucas@label@ch@bibname}
@@ -629,8 +654,8 @@
 %- appendix
 \ctexset {
     appendix = {
-        %numbering = true|false,
-        %number = \rmfamily\Alph{chapter},
+        numbering = true,
+        number = \rmfamily\zhnum{chapter},
     }
 }
 %---------------------------------------------------------------------------%
